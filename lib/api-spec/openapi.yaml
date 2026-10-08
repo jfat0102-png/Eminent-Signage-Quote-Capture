@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: quote-requests
+    description: Public quote request submission
 paths:
   /healthz:
     get:
@@ -24,6 +26,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /quote-requests:
+    post:
+      operationId: createQuoteRequest
+      tags: [quote-requests]
+      summary: Save a quote request
+      description: Saves a customer quote request for private follow-up.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequestInput"
+      responses:
+        "201":
+          description: Quote request saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteRequestReceipt"
+        "400":
+          description: Invalid quote request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +66,54 @@ components:
           type: string
       required:
         - status
+    QuoteRequestInput:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        service:
+          type: string
+          enum:
+            - Interior Signage
+            - Exterior Signage
+            - Office Branding
+            - Front Store Signage
+            - Fabrication
+            - Installation
+            - Maintenance
+            - General Printing
+        budget:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+          minLength: 1
+          maxLength: 3000
+        contact:
+          type: string
+          minLength: 3
+          maxLength: 180
+        companyWebsite:
+          type: string
+          maxLength: 200
+          description: Hidden honeypot field for basic bot filtering.
+      required: [name, service, description, contact]
+    QuoteRequestReceipt:
+      type: object
+      properties:
+        id:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, createdAt]
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
 
